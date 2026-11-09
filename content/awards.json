@@ -1,0 +1,36 @@
+[
+  {
+    "id": "samsung-ai-challenge",
+    "date": "2023.10",
+    "title": "2023 Samsung AI Challenge",
+    "category": "Image Quality Assessment",
+    "prize": "최우수상",
+    "rank": "440팀 중 1위",
+    "organization": "삼성종합기술원 · SAIT",
+    "role": "팀장 · 캡셔닝 모델 분석 및 고도화",
+    "description": "화질을 자연어로 설명하는 캡셔닝 모델에 어휘 확장과 SCST를 적용해 캡셔닝 성능을 누적 약 12% 개선했습니다.",
+    "projectId": "aesthetic-captioning"
+  },
+  {
+    "id": "coss-bootcamp",
+    "date": "2023.01",
+    "title": "2022 동계 COSS 산업 부트캠프",
+    "category": "음성 인식 후처리 · 텍스트 정규화",
+    "prize": "대상",
+    "rank": "1위",
+    "organization": "서울과학기술대학교",
+    "role": "팀장 · 학습 데이터 제작·정제 및 실험 리딩",
+    "description": "음성 인식 결과에서 문장 구두점과 수학 기호를 복원하는 네트워크의 성능을 개선했습니다."
+  },
+  {
+    "id": "graduation-project",
+    "date": "2022.12",
+    "title": "졸업 작품: 방송용 픽셀단위 모자이크기",
+    "category": "실시간 영상 인식 · 모자이크",
+    "prize": "우수상",
+    "rank": "1위",
+    "organization": "서울과학기술대학교",
+    "role": "Semi-supervised 데이터 제작 · Segmentation 학습 · 트래킹 구현",
+    "description": "영상 속 브랜드 노출과 부적절한 장면을 차단하기 위해 픽셀 단위 분할과 칼만 필터 기반 추적을 결합했습니다."
+  }
+]

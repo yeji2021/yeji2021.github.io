@@ -1,0 +1,177 @@
+{
+  "id": "aesthetic-captioning",
+  "no": "04",
+  "title": "이미지 품질을 설명하는 캡셔닝",
+  "english": "Image Aesthetic Assessment Captioning",
+  "org": "2023 Samsung AI Challenge",
+  "period": "2023.09 — 2023.10",
+  "description": "mPLUG 기반 모델에 화질 어휘 확장과 SCST 학습을 적용해, 이미지의 미적 요소를 설명하는 캡션을 개선했습니다.",
+  "tags": [
+    "Image Captioning",
+    "Computer Vision"
+  ],
+  "metric": "1 / 440",
+  "metricLabel": "Samsung AI Challenge 우승",
+  "kind": "COMPETITION · TEAM LEAD",
+  "image": "captioning",
+  "caption": "구도·색감·질감 등 이미지 품질을 자연어로 설명",
+  "role": "팀장 · 캡셔닝 파트 최적화",
+  "problem": "초기 모델은 이미지 속 물체를 주로 설명하거나 비슷한 평가 표현을 반복했습니다. 색감·대비·질감 등 이미지마다 다른 미적 특징을 캡션에 충분히 담아내는 것이 과제였습니다.",
+  "approach": [
+    "제공 데이터셋에서 화질 관련 어휘를 추출하고 기존 단어장의 unused token에 추가했습니다.",
+    "SCST(Self-critical Sequence Training)로 CIDEr-D 점수를 직접 최적화했습니다.",
+    "여러 캡션을 생성하는 학습 과정의 메모리 문제를 Automatic Mixed Precision으로 완화했습니다."
+  ],
+  "results": [
+    {
+      "value": "+11.9%",
+      "label": "대회 종합 평가 점수",
+      "note": "초기 baseline 대비 · 1.2468 → 1.3954"
+    },
+    {
+      "value": "1 / 440",
+      "label": "대회 최종 순위",
+      "note": "MOS 예측·캡셔닝을 포함한 팀 성과"
+    }
+  ],
+  "figures": [],
+  "stack": [
+    "mPLUG",
+    "Image Captioning",
+    "Vocabulary Expansion",
+    "SCST",
+    "CIDEr-D",
+    "Automatic Mixed Precision"
+  ],
+  "summary": "이미지의 화질과 미적 요소를 설명하는 캡셔닝 과제에서, 물체 설명과 제한된 평가 표현을 반복하던 mPLUG 기반 모델을 개선했습니다. 생성 캡션을 분석해 품질 관련 어휘를 확장하고, SCST로 문장 수준의 보상을 학습했습니다. SCST의 메모리 부담은 AMP로 완화했으며, 대회 종합 평가 점수를 1.2468에서 1.3954로 높여 팀의 440팀 중 1위 달성에 기여했습니다.",
+  "contributions": [
+    "팀장으로 참여해 mPLUG 기반 모델의 캡셔닝 파트 분석·학습·최적화를 담당했습니다.",
+    "데이터셋과 기존 단어장을 비교해 품질 관련 어휘를 선별하고, unused token에 추가해 평가 표현의 범위를 넓혔습니다.",
+    "SCST의 CIDEr-D 보상으로 생성 문장을 직접 최적화하고, 다중 캡션 생성의 메모리 문제에 AMP를 적용했습니다."
+  ],
+  "objective": "이미지의 선명도·구도·색감·질감 등 품질을 평가한 이유를 자연어로 설명하는 것이 목표였습니다. 품질 관련 표현의 범위를 넓히고, 생성 문장이 참조 캡션의 평가 내용을 더 잘 반영하도록 학습을 개선했습니다.",
+  "sections": [
+    {
+      "id": "output-analysis",
+      "title": "생성 문장에서 학습의 한계 진단",
+      "group": "method",
+      "body": [
+        "생성 캡션과 참조 캡션을 비교하니 모델은 통나무와 버섯 같은 대상을 주로 설명했고, 참조 캡션은 색상·패턴·질감을 평가했습니다. 회색조 이미지에서도 “black and white”와 같은 표현이 반복됐습니다.",
+        "품질 관련 표현을 더 다양하게 생성하도록 어휘를 보강하고, 문장 전체의 평가 결과를 학습에 반영하는 SCST를 적용했습니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/image27.webp",
+          "caption": "이미지의 구도·색감·조명 등을 평가하는 참조 캡션 예시. 물체를 묘사하는 것과 달리, 무엇이 좋거나 개선되어야 하는지 설명하는 것이 목표입니다."
+        }
+      ]
+    },
+    {
+      "id": "vocabulary-expansion",
+      "title": "품질 관련 어휘를 단어장에 추가",
+      "group": "method",
+      "body": [
+        "반복되는 평가 표현을 보완하기 위해 대회 데이터셋에서 품질 관련 어휘 후보를 추출했습니다. 기존 단어장과 비교해 겹치지 않는 어휘를 선별하고 [unused#] 항목에 추가해 학습했습니다.",
+        "어휘 확장 전후에 같은 이미지의 생성 캡션을 비교하며 색감·대비·질감을 설명하는 표현의 변화를 확인했습니다."
+      ]
+    },
+    {
+      "id": "scst-training",
+      "title": "SCST로 캡션을 최적화하고 AMP로 학습 부담 완화",
+      "group": "method",
+      "body": [
+        "어휘 확장 후 SCST(Self-Critical Sequence Training)를 적용했습니다. 일반 캡셔닝 학습을 마친 모델에서 생성 캡션과 참조 캡션의 CIDEr-D 점수를 보상으로 사용해, 문장 수준의 평가를 직접 학습에 반영했습니다.",
+        "SCST는 한 이미지에 대해 5개의 캡션을 생성해 메모리 부담과 학습 시간이 늘어났습니다. Automatic Mixed Precision을 적용해 FP16으로 메모리 사용을 줄이고, 수치 정확도가 중요한 손실 계산은 FP32로 유지하며 학습을 진행했습니다."
+      ]
+    },
+    {
+      "id": "qualitative-comparison",
+      "figureLayout": "pair",
+      "title": "어휘 확장 전후의 표현 변화",
+      "group": "evaluation",
+      "body": [
+        "어휘 확장 전에는 서로 다른 이미지에도 “the colors and the light”, “black and white” 같은 표현이 반복됐습니다. 확장 후에는 “bw treatment”, “bw conversion”, “contrast of the dark and light”처럼 흑백 처리와 명암 대비를 설명하는 표현이 나타났습니다.",
+        "동일한 이미지의 생성 캡션을 나란히 비교해 표현의 변화와 반복 감소를 확인했습니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/image28.webp",
+          "caption": "어휘 확장 전 생성 캡션. 서로 다른 이미지에서도 색감·조명·흑백에 관한 유사한 표현을 반복합니다."
+        },
+        {
+          "src": "/images/image29.webp",
+          "caption": "어휘 확장 후 동일 이미지 ID의 생성 캡션. 흑백 처리, 명암 대비, 부드러움 등 품질을 설명하는 표현이 다양해졌습니다."
+        }
+      ]
+    },
+    {
+      "id": "quantitative-comparison",
+      "title": "학습 단계별 평가 점수",
+      "group": "evaluation",
+      "body": [
+        "대회는 여러 지표를 결합한 종합 평가 점수를 사용했습니다. 어휘 확장 후 점수는 1.2468에서 1.3026으로 약 4.5% 향상됐고, SCST를 적용한 최종 모델은 1.3954를 기록했습니다. 초기 baseline 대비 약 11.9% 개선된 결과입니다."
+      ],
+      "table": {
+        "title": "캡셔닝 학습 단계별 결과",
+        "columns": [
+          "학습 단계",
+          "대회 종합 평가 점수",
+          "직전 단계 대비"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "Baseline",
+              "1.2468",
+              "—"
+            ]
+          },
+          {
+            "cells": [
+              "어휘 확장",
+              "1.3026",
+              "+4.5%"
+            ]
+          },
+          {
+            "cells": [
+              "어휘 확장 + SCST",
+              "1.3954",
+              "+7.1%"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "프로젝트 실험 기록 기준. 개선율은 점수의 상대 변화입니다. 종합 평가의 세부 지표와 가중치는 미확인 상태이며, SCST 학습 보상으로 사용한 CIDEr-D 단일 점수와 구분합니다."
+      }
+    },
+    {
+      "id": "competition-result",
+      "title": "개인 기여와 팀 성과",
+      "group": "evaluation",
+      "body": [
+        "2023 Samsung AI Challenge에서 440팀 중 1위를 달성했습니다. 팀장으로서 담당한 캡셔닝 모델의 출력 분석, 어휘 확장, SCST 학습과 Mixed Precision 최적화가 개인 기여입니다.",
+        "대회 최종 순위는 MOS 예측과 캡셔닝을 포함한 팀 전체 시스템의 성과입니다."
+      ]
+    }
+  ],
+  "outcome": "2023 Samsung AI Challenge: Image Quality Assessment에서 440팀 중 1위를 달성했습니다. 팀장으로 캡셔닝 파트의 출력 분석·어휘 확장·SCST 학습과 AMP 적용을 담당해, 초기 baseline 대비 대회 종합 평가 점수를 11.9% 높였습니다.",
+  "sourceNote": "2023 Samsung AI Challenge 프로젝트 실험 및 수상 기록 기준.",
+  "links": [],
+  "emphasis": {
+    "strong": [
+      "품질 관련 어휘를 확장",
+      "SCST로 문장 수준의 보상을 학습",
+      "팀장으로 참여",
+      "[unused#] 항목에 추가",
+      "CIDEr-D 점수를 보상",
+      "Automatic Mixed Precision",
+      "손실 계산은 FP32로 유지"
+    ],
+    "accent": [
+      "1.2468에서 1.3954",
+      "440팀 중 1위",
+      "초기 baseline 대비 약 11.9% 개선"
+    ]
+  }
+}

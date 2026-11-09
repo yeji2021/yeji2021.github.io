@@ -1,0 +1,335 @@
+{
+  "id": "guided-super-resolution",
+  "no": "05",
+  "title": "열 정보를 보존하는 위성영상 초해상도",
+  "english": "RGB-Guided MIR Super-Resolution · GTFormer",
+  "org": "CVLab, Seoultech · KARI 용역과제",
+  "period": "2023.03 — 2023.12",
+  "description": "RGB의 텍스처로 중적외선 위성영상의 세부 구조를 복원하되, 원본 MIR 정보가 왜곡되지 않도록 2단계 학습을 적용했습니다. 정보 보존과 시각적 선명함의 균형을 목표로 한 연구입니다.",
+  "tags": [
+    "Super-Resolution",
+    "Computer Vision"
+  ],
+  "metric": "1.5",
+  "metricLabel": "정보 보존·시각 품질 평균 순위",
+  "kind": "RESEARCH · FIRST AUTHOR",
+  "image": "super-resolution",
+  "caption": "Input / RGB / DCTNet / PANColorGAN / GTFormer",
+  "thumbnail": {
+    "src": "/images/research/mir-kompsat3a-comparison.webp",
+    "caption": "KOMPSAT-3A 정성 비교 · 원본 MIR 정보와 공간 세부 복원"
+  },
+  "role": "제1저자 · 중적외선 위성영상 초해상도 연구",
+  "summary": "중적외선(MIR) 위성영상은 공간 해상도가 낮아 건물과 도로의 세부 구조를 구분하기 어렵습니다. RGB를 직접 융합하면 선명해지는 대신 RGB 밝기가 원본 MIR 정보를 왜곡하는 문제가 있었습니다. 다중 스케일 텍스처 전달과 2단계 학습을 결합한 GTFormer로 세부 구조를 보완하고, 원본 정보 보존과 시각적 품질 사이의 균형을 확보했습니다. 제1저자 연구로 IEEE Access에 게재되었습니다.",
+  "contributions": [
+    "한국항공우주연구원 용역과제에서 중적외선 위성영상 초해상도 연구를 제1저자로 수행했습니다.",
+    "초기 RGB–MIR 직접 융합에서 RGB의 밝기가 원본 MIR 값을 바꾸는 오류를 분석하고, 세부 윤곽과 텍스처를 전달하는 방향으로 구조를 개선했습니다."
+  ],
+  "problem": "MIR와 RGB의 픽셀값은 서로 다른 정보를 나타냅니다. RGB에서 밝지만 열에너지는 낮은 물체의 밝기가 출력으로 전이되면 원본 MIR 정보가 왜곡됩니다. 고해상도 MIR 정답과 대규모 정합 데이터가 부족한 상황에서는 모델이 RGB를 복사하는 방식에 의존하기 쉽습니다.",
+  "objective": "MIR의 원본 정보를 유지하면서 RGB가 제공하는 건물·도로의 공간 세부를 보완하고, 정보 보존과 시인성 사이의 균형을 확보하는 것이 목표였습니다.",
+  "approach": [
+    "직접 융합에서 발견한 밝기 전이 문제를 다중 스케일 텍스처 전달 문제로 재정의했습니다.",
+    "비정합 RGB 참조 영상으로 텍스처 전달을 사전학습하고, 정합 MIR–RGB 쌍으로 미세조정했습니다.",
+    "Consistency loss와 texture similarity loss를 함께 사용해 원본 정보 보존과 구조 복원을 학습했습니다."
+  ],
+  "results": [
+    {
+      "value": "1.5",
+      "label": "정보 보존·시각 품질 평균 순위",
+      "note": "KOMPSAT-3A · 여섯 지표의 평균 순위 · 비교 방법 중 최상위"
+    },
+    {
+      "value": "−20.2%",
+      "label": "SAM 정보 보존 오차",
+      "note": "DCTNet 1.0495 → GTFormer 0.8373"
+    },
+    {
+      "value": "IEEE Access",
+      "label": "제1저자 논문 게재",
+      "note": "2025 · Vol. 13, pp. 138037–138051"
+    }
+  ],
+  "sections": [
+    {
+      "id": "texture-transfer",
+      "title": "직접 융합의 오류에서 텍스처 전달로 전환",
+      "group": "method",
+      "body": [
+        "초기에는 동일 지역의 RGB와 MIR를 직접 융합했지만, RGB에서 밝은 물체의 출력 픽셀값이 MIR에서도 높아지는 오류가 발생했습니다. 경계가 선명해져도 원본 MIR의 밝기 관계가 달라진다면 올바른 복원으로 보기 어려웠습니다.",
+        "RGB의 외곽선과 세부 텍스처를 특징 공간에서 전달하고, 최종 영상은 MIR 입력과 일관되도록 학습했습니다. 공간 세부를 보완하면서 원본 정보도 유지하는 것이 설계의 핵심이었습니다."
+      ]
+    },
+    {
+      "id": "gtformer-architecture",
+      "title": "GTFormer: 여러 스케일의 RGB 텍스처를 MIR 특징에 전달",
+      "group": "method",
+      "body": [
+        "Image encoder는 저해상도 MIR 특징을 추출하고, texture encoder는 고해상도 RGB의 다중 스케일 특징을 추출합니다. 스케일별 texture transformer가 RGB 텍스처를 MIR 특징에 주입하고, multi-scale decoder가 거친 구조부터 세부 경계까지 특징을 통합해 고해상도 MIR를 복원합니다.",
+        "RGB 사전학습에서는 입력과 참조 영상이 정합되지 않아 관련 텍스처를 찾는 matching이 필요합니다. 정합 MIR–RGB 미세조정에서는 같은 위치의 특징을 결합하도록 변경하고 texture matching과 similarity-based scaling을 제거했습니다. 서로 다른 학습 과제의 공간적 조건에 맞춰 전달 구조를 조정한 것입니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/research/mir-gtformer-architecture.webp",
+          "caption": "논문 Fig. 3(b). MIR–RGB 미세조정 단계의 GTFormer. 저해상도 MIR 특징에 고해상도 RGB의 텍스처를 스케일별로 전달하고 multi-scale decoder로 복원합니다."
+        }
+      ]
+    },
+    {
+      "id": "rgb-pretraining",
+      "title": "1단계: 비정합 RGB 참조 영상으로 텍스처 전달을 사전학습",
+      "group": "method",
+      "body": [
+        "소규모 MIR–RGB 쌍만으로 처음부터 학습하는 대신, CUFED의 일반 RGB 영상으로 reference-based super-resolution을 먼저 학습했습니다. 입력과 공간적으로 정합되지 않은 고해상도 참조 영상을 사용하면 같은 위치의 값을 복사하는 대신 관련 텍스처를 찾아 전달하는 과제를 학습할 수 있습니다.",
+        "이 단계는 정답 RGB가 있으므로 reconstruction loss로 픽셀 차이를 줄이고, VGG 특징의 perceptual loss와 adversarial loss를 함께 사용해 특징 유사성과 시각적 품질을 학습했습니다. 사전학습은 텍스처 전달 능력을 확보하고 MIR 미세조정의 초기 가중치를 제공하는 역할입니다."
+      ]
+    },
+    {
+      "id": "mir-finetuning",
+      "title": "2단계: MIR 정보 일관성과 RGB 텍스처 유사도를 함께 학습",
+      "group": "method",
+      "body": [
+        "고해상도 MIR 정답이 없는 조건에서 원본 정보 보존과 세부 구조 복원을 함께 학습했습니다. Consistency loss는 고해상도 출력을 축소했을 때 입력 MIR와 일치하도록 하고, texture similarity loss는 출력과 RGB 가이드의 VGG 특징을 비교해 공간 세부의 전달을 유도합니다.",
+        "RGB 참조 영상으로 사전학습한 가중치를 정합 MIR–RGB 쌍으로 미세조정했습니다. 텍스처를 전달하는 능력을 MIR 도메인에 적용하면서, RGB 픽셀값을 그대로 따라가는 문제를 줄였습니다."
+      ]
+    },
+    {
+      "id": "kompsat3a-metrics",
+      "title": "원본 정보 보존과 시각적 품질의 균형 평가",
+      "group": "evaluation",
+      "body": [
+        "KOMPSAT-3A에서 MSE·ERGAS·SAM으로 원본 MIR 정보 보존을, LPIPS·NIQE·MUSIQ로 RGB 가이드와의 특징 유사도 및 시각적 품질을 평가했습니다. 원본 정보가 잘 보존되어도 경계가 흐릴 수 있고, 선명해 보여도 RGB 정보가 과하게 전이될 수 있어 두 측면을 함께 살폈습니다.",
+        "GTFormer는 정보 보존 지표에서 좋은 결과를 유지하면서 세부 경계도 복원했습니다. 여섯 지표의 평균 순위는 1.5로, 비교 방법 중 가장 좋은 균형을 보였습니다."
+      ],
+      "table": {
+        "title": "KOMPSAT-3A 정량 비교",
+        "columns": [
+          "Method",
+          "MSE↓",
+          "ERGAS↓",
+          "SAM↓",
+          "LPIPS↓",
+          "NIQE↓",
+          "MUSIQ↑",
+          "평균 순위↓"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "PixTransform",
+              "0.1235",
+              "165.58",
+              "4.8015",
+              "0.3464",
+              "5.3885",
+              "37.9070",
+              "5.7"
+            ]
+          },
+          {
+            "cells": [
+              "TTSR",
+              "0.0037",
+              "31.22",
+              "3.5601",
+              "0.3323",
+              "5.1451",
+              "30.1216",
+              "5.2"
+            ]
+          },
+          {
+            "cells": [
+              "SwinIR",
+              "0.0036",
+              "27.31",
+              "1.6353",
+              "0.4500",
+              "7.2457",
+              "34.9352",
+              "5.7"
+            ]
+          },
+          {
+            "cells": [
+              "DCTNet",
+              "0.0004",
+              "10.40",
+              "1.0495",
+              "0.3765",
+              "6.6442",
+              "33.7233",
+              "4.0"
+            ]
+          },
+          {
+            "cells": [
+              "PANColorGAN",
+              "0.0059",
+              "36.92",
+              "3.7029",
+              "0.2141",
+              "3.9332",
+              "28.7962",
+              "5.2"
+            ]
+          },
+          {
+            "cells": [
+              "HSENet",
+              "0.0015",
+              "19.24",
+              "2.1770",
+              "0.4353",
+              "7.0571",
+              "36.2022",
+              "4.7"
+            ]
+          },
+          {
+            "cells": [
+              "TTST",
+              "0.0026",
+              "25.49",
+              "2.8998",
+              "0.3762",
+              "6.1099",
+              "39.9811",
+              "4.0"
+            ]
+          },
+          {
+            "cells": [
+              "GTFormer",
+              "0.0004",
+              "9.70",
+              "0.8373",
+              "0.2954",
+              "4.9421",
+              "37.3959",
+              "1.5"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "논문 Table 4 · KOMPSAT-3A 실영상 평가. MSE·ERGAS·SAM은 원본 MIR 정보 보존, LPIPS는 출력과 RGB 가이드의 특징 유사도를 평가하며 고해상도 MIR 정답 대비 오차가 아닙니다. NIQE·MUSIQ는 무참조 시각 품질 지표입니다. MSE는 표의 반올림 값이 GTFormer·DCTNet 모두 0.0004이나 논문 순위는 각각 1·2위입니다. 평균 순위는 논문 보고값이며, 강조 행이 모든 열의 최고값을 뜻하지 않습니다."
+      }
+    },
+    {
+      "id": "qualitative-comparison",
+      "title": "선명한 경계와 원본 MIR의 밝기 관계를 함께 확인",
+      "group": "evaluation",
+      "body": [
+        "DCTNet은 원본 정보를 유지하지만 건물과 도로의 경계가 흐려지는 사례가 있고, PANColorGAN은 선명한 출력에 RGB의 밝기가 전이되는 사례가 있습니다. Fig. 7의 밝은 dome처럼 MIR에서는 두드러지지 않던 RGB의 특징이 과하게 들어가는지 확인했습니다.",
+        "GTFormer는 같은 장면에서 세부 경계를 복원하면서 원본 MIR의 밝기 관계를 유지했습니다. 비교 방법의 출력을 같은 확대 영역에 배치해 선명함뿐 아니라 RGB 가이드로 인한 정보 변형도 함께 해석했습니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/research/mir-kompsat3a-comparison.webp",
+          "caption": "논문 Fig. 7. KOMPSAT-3A site 1의 원본 MIR와 확대 비교. 왼쪽은 전체 장면이며 확대 패널은 Input / RGB / DCTNet / PANColorGAN / GTFormer 순서입니다. 붉은 영역의 밝은 dome와 푸른 영역의 구조를 통해 경계 복원과 밝기 전이를 함께 비교합니다."
+        }
+      ]
+    },
+    {
+      "id": "training-ablation",
+      "title": "2단계 학습으로 정보 보존과 세부 복원을 함께 개선",
+      "group": "evaluation",
+      "body": [
+        "RGB 사전학습 모델만 적용하면 MIR 특성에 충분히 적응하지 못했습니다. MIR–RGB 쌍으로 처음부터 학습한 모델은 RGB 가이드와의 LPIPS는 낮았지만, 원본 정보 보존 지표가 나빠졌습니다.",
+        "RGB 사전학습 후 MIR 미세조정까지 진행한 모델은 LPIPS를 제외한 다섯 지표에서 가장 좋은 결과를 얻었습니다. 텍스처 전달 능력을 먼저 학습하고 MIR 정보 보존에 맞춰 조정하는 2단계 구성이 두 목표의 균형에 도움이 됐습니다."
+      ],
+      "table": {
+        "title": "2단계 학습 전략 구성 요소 비교",
+        "columns": [
+          "학습 전략",
+          "MSE↓",
+          "ERGAS↓",
+          "SAM↓",
+          "LPIPS↓",
+          "NIQE↓",
+          "MUSIQ↑"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "RGB 사전학습만",
+              "0.0037",
+              "31.22",
+              "3.5601",
+              "0.3323",
+              "5.1451",
+              "30.1216"
+            ]
+          },
+          {
+            "cells": [
+              "MIR–RGB 처음부터 학습",
+              "0.0068",
+              "38.33",
+              "4.1204",
+              "0.1512",
+              "4.9848",
+              "29.8489"
+            ]
+          },
+          {
+            "cells": [
+              "RGB 사전학습 후 MIR–RGB 미세조정",
+              "0.0004",
+              "9.70",
+              "0.8373",
+              "0.2954",
+              "4.9421",
+              "37.3959"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "논문 Table 7 · KOMPSAT-3A. 원문 Pre-trained / From scratch / From pre-trained를 학습 전략으로 풀어 표기했습니다. LPIPS는 RGB 가이드와의 비교이며, 최종 2단계 구성은 LPIPS를 제외한 다섯 지표에서 가장 좋은 결과를 보였습니다."
+      }
+    },
+    {
+      "id": "generalization-and-limits",
+      "title": "다른 모달리티 조합으로 확장하고 가이드 의존성 확인",
+      "group": "evaluation",
+      "body": [
+        "KOMPSAT-2의 NIR–PAN 조합에도 추가 미세조정 없이 적용해 다른 모달리티 조합으로의 확장 가능성을 확인했습니다.",
+        "고품질로 정합된 가이드 영상에 의존한다는 한계가 있습니다. 가이드의 노이즈나 정합 오차에 대한 안정성은 추가 검증이 필요합니다."
+      ]
+    }
+  ],
+  "outcome": "RGB 텍스처 전달과 2단계 학습을 결합해 MIR의 원본 정보 보존과 세부 구조 복원의 균형을 확보했습니다. 제1저자 논문 “Guided Texture Transfer Network for Mid-Infrared Satellite Image Super Resolution”으로 IEEE Access에 게재했으며, 선행 연구는 대한전자공학회 하계학술대회(2023)에서 발표했습니다.",
+  "sourceNote": "모델·학습 전략·정량 및 정성 비교는 IEEE Access 게재 논문(2025)의 공동 연구 결과입니다. 구조도는 Fig. 3(b), 정성 비교는 Fig. 7, 정량 표는 Tables 4·7을 기준으로 구성했습니다.",
+  "links": [
+    {
+      "label": "논문 · IEEE Access",
+      "url": "https://doi.org/10.1109/ACCESS.2025.3595829"
+    }
+  ],
+  "figures": [],
+  "stack": [
+    "GTFormer",
+    "Guided Super-Resolution",
+    "Texture Transfer",
+    "Multi-scale Decoder",
+    "Reference-based SR",
+    "Consistency Loss",
+    "VGG19",
+    "AdamW"
+  ],
+  "emphasis": {
+    "strong": [
+      "RGB 밝기가 원본 MIR 정보를 왜곡",
+      "다중 스케일 텍스처 전달과 2단계 학습",
+      "원본 정보 보존과 시각적 품질 사이의 균형",
+      "세부 텍스처를 특징 공간에서 전달",
+      "최종 영상은 MIR 입력과 일관되도록",
+      "Consistency loss",
+      "texture similarity loss",
+      "두 측면을 함께"
+    ],
+    "accent": [
+      "평균 순위는 1.5",
+      "제1저자 연구로 IEEE Access에 게재"
+    ]
+  }
+}

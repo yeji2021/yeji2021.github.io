@@ -1,0 +1,13 @@
+{
+  "name": "전예지",
+  "englishName": "Yeji Jeon",
+  "role": "AI Engineer",
+  "focus": [
+    "MLLM",
+    "Computer Vision"
+  ],
+  "intro": "비전 모델과 MLLM을 연구해 왔습니다.\n현재는 삼성전자에서 로봇청소기의 사물인식 모델과 학습 데이터 파이프라인을 개발합니다.",
+  "email": "yeji.jeon.feb@gmail.com",
+  "currentCompany": "Samsung Electronics",
+  "currentTeam": "AI Solution Lab · Vision"
+}

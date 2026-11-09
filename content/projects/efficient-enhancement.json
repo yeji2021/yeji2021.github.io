@@ -1,0 +1,540 @@
+{
+  "id": "efficient-enhancement",
+  "no": "06",
+  "title": "대표 색상 변환 기반 경량 영상 개선",
+  "english": "Efficient Image Enhancement via Representative Color Transform",
+  "org": "CVLab, Seoultech",
+  "period": "2023.03 — 2023.08",
+  "description": "대표 색상 변환 기반 모델을 경량화하고, 재구성·엔트로피 손실로 색상 편향을 줄였습니다. AdaInt 대비 파라미터를 78.8% 줄이면서 영상 개선 품질을 높였습니다.",
+  "tags": [
+    "Image Enhancement",
+    "Computer Vision"
+  ],
+  "metric": "−78.8%",
+  "metricLabel": "AdaInt 대비 파라미터 감소",
+  "kind": "RESEARCH · FIRST AUTHOR",
+  "image": "enhancement",
+  "caption": "Input / AdaInt / RCT++ / Ground truth",
+  "thumbnail": {
+    "src": "/images/research/enhancement-adobe5k.webp",
+    "caption": "Adobe5K 정성 비교 · Input / AdaInt / RCT++ / GT"
+  },
+  "role": "제1저자 · 경량 영상 개선 모델 연구",
+  "summary": "영상의 대표 색상을 변환하고 각 픽셀에 반영하는 RCT++를 연구했습니다. Depth-wise Separable Convolution으로 모델을 경량화하고, 대표 특징이 일부 색상에 집중하는 문제를 재구성·엔트로피 손실로 보완했습니다. AdaInt 대비 파라미터를 619.7K에서 131.4K로 줄이면서 Adobe5K PSNR을 25.49에서 25.60 dB로 높였습니다.",
+  "contributions": [
+    "제1저자로 대표 색상 변환 기반 영상 개선 모델의 경량화 연구를 수행했습니다.",
+    "Depth-wise Separable Convolution 기반 네트워크를 설계·학습하고, 대표 특징이 특정 색상에 집중하는 현상을 분석했습니다.",
+    "엔트로피 손실로 색상 편향을 완화하고 일반 사진·저조도·수중 영상에서 구성 요소와 개선 결과를 비교했습니다."
+  ],
+  "problem": "복잡한 픽셀 단위 영상 개선 네트워크는 연산량과 모델 규모의 부담이 큽니다. 대표 색상 변환으로 출력을 구성하면 효율적이지만, 원래 RCT에는 대표 색상이 입력을 제대로 대표하도록 하는 명시적인 학습 제약과 대표 특징의 다양성을 확보하는 장치가 부족했습니다.",
+  "objective": "작은 네트워크로 영상 개선을 수행하면서, 드물게 나타나는 색상까지 반영하고 출력의 색조 균형을 유지하는 것이 목표였습니다.",
+  "approach": [
+    "대표 색상으로 입력을 재구성하는 학습 경로를 추가해 대표 색상과 특징의 의미를 명확히 했습니다.",
+    "대표 특징의 엔트로피를 높이는 손실로 특정 색상에 대한 집중을 완화했습니다.",
+    "주변 픽셀 정보를 반영하는 인코더와 Depth-wise Separable Convolution으로 모델을 경량화하고 세 환경에서 평가했습니다."
+  ],
+  "results": [
+    {
+      "value": "131.4K",
+      "label": "모델 파라미터",
+      "note": "AdaInt 619.7K 대비 78.8% 감소 · Adobe5K 비교"
+    },
+    {
+      "value": "+0.11 dB",
+      "label": "Adobe5K PSNR",
+      "note": "AdaInt 25.49 → RCT++ 25.60 · Expert C 기준"
+    },
+    {
+      "value": "IEEE Access",
+      "label": "제1저자 논문 게재",
+      "note": "2024 · Vol. 12, pp. 76458–76468"
+    }
+  ],
+  "sections": [
+    {
+      "id": "representative-transform",
+      "title": "대표 색상에 대한 변환을 전체 픽셀로 확장",
+      "group": "method",
+      "body": [
+        "RCT는 입력 영상에서 픽셀별 특징과 대표 특징을 추출하고, 대표 특징마다 개선된 색상을 예측합니다. 픽셀 특징과 대표 특징의 유사도를 softmax 가중치로 변환한 뒤, 개선된 대표 색상을 가중합해 출력 영상을 구성합니다.",
+        "RCT++는 이 원리를 유지하면서 입력을 대표하는 색상도 별도로 예측합니다. 같은 유사도 가중치로 대표 색상을 합쳐 원래 입력을 재구성하고, 입력과 재구성 결과 사이의 L1 손실을 최소화합니다. 이를 통해 대표 색상이 입력의 주요 색상을 설명하도록 학습합니다. 파란 점선의 재구성 경로는 학습 때만 사용하므로 추론 비용을 늘리지 않습니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/research/enhancement-pipeline.webp",
+          "caption": "논문 Fig. 1. RCT++ 전체 흐름. 대표 특징과 변환 색상으로 영상을 개선하고, 학습 중에는 대표 색상으로 입력을 재구성합니다. 파란 점선 경로는 학습 전용입니다."
+        }
+      ]
+    },
+    {
+      "id": "entropy-regularization",
+      "title": "엔트로피 손실로 특정 색상에 집중하는 현상 완화",
+      "group": "method",
+      "body": [
+        "대표 특징이 지배적인 색상에 집중하면 드물게 나타나는 색상을 충분히 표현하기 어렵습니다. 대표 특징 간 유사도로 계산한 분포의 엔트로피를 높이는 손실을 추가해 특정 색상에 집중하는 현상을 완화했습니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/research/enhancement-entropy.webp",
+          "caption": "학습 중 대표 특징의 엔트로피 변화. 파란색은 엔트로피 손실 적용, 빨간색은 미적용 조건입니다. 손실 적용 시 특징의 엔트로피가 높게 유지됩니다. 포트폴리오 실험 시각화."
+        }
+      ]
+    },
+    {
+      "id": "lightweight-network",
+      "title": "지역 맥락을 반영하면서 네트워크 규모 축소",
+      "group": "method",
+      "body": [
+        "픽셀 색상을 처리하는 1×1 convolution 분기와 주변 맥락을 반영하는 5×5 convolution 분기를 결합했습니다. 같은 색상도 주변 영역에 따라 다르게 개선할 수 있는 구조입니다.",
+        "대표 특징·색상 예측 모듈에는 Depth-wise Separable Convolution을 적용해 파라미터 수를 줄였습니다. 두 분기를 함께 사용할 때 가장 좋은 개선 품질을 얻었습니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/research/enhancement-encoder.webp",
+          "caption": "논문 Fig. 2. 두 분기로 구성된 인코더와 Depth-wise Separable Convolution 블록."
+        }
+      ],
+      "table": {
+        "title": "인코더 분기별 구성 요소 비교",
+        "columns": [
+          "설정",
+          "PSNR↑ (dB)",
+          "SSIM↑",
+          "LPIPS↓"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "두 분기 모두 사용",
+              "25.60",
+              "0.932",
+              "0.049"
+            ],
+            "highlight": true
+          },
+          {
+            "cells": [
+              "첫 번째 분기 제외",
+              "25.28",
+              "0.924",
+              "0.052"
+            ]
+          },
+          {
+            "cells": [
+              "두 번째 분기 제외",
+              "25.24",
+              "0.924",
+              "0.055"
+            ]
+          }
+        ],
+        "note": "논문 Table 6 · Adobe5K · 다른 학습 조건은 동일하게 유지하고 인코더 분기만 변경."
+      }
+    },
+    {
+      "id": "training-objective",
+      "title": "색상·재구성·다양성·국소 세부를 함께 학습",
+      "group": "method",
+      "body": [
+        "출력 색상 손실, 입력 재구성 손실, 엔트로피 손실, grid frequency 손실을 함께 사용했습니다. 각각 보정 품질, 대표 색상의 입력 재현, 특징의 다양성, 국소 세부 보존을 학습하도록 구성했습니다."
+      ]
+    },
+    {
+      "id": "adobe5k-evaluation",
+      "title": "일반 사진: 적은 파라미터로 개선 품질 확보",
+      "group": "evaluation",
+      "body": [
+        "Adobe5K에서 AdaInt 대비 파라미터를 78.8% 줄이면서 PSNR 25.49→25.60 dB, SSIM 0.926→0.932, LPIPS 0.052→0.049를 얻었습니다. 파라미터 수를 줄이면서 개선 품질도 높인 결과입니다. 추론 시간은 AdaInt보다 길어 모델 크기와 실행 속도는 구분해 평가했습니다."
+      ],
+      "table": {
+        "title": "Adobe5K 정량 비교",
+        "columns": [
+          "Method",
+          "PSNR↑ (dB)",
+          "SSIM↑",
+          "LPIPS↓",
+          "Parameters",
+          "Runtime (ms)"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "UPE",
+              "21.88",
+              "0.853",
+              "—",
+              "927.1K",
+              "4.27"
+            ]
+          },
+          {
+            "cells": [
+              "HDRNet",
+              "24.66",
+              "0.915",
+              "0.084",
+              "483.1K",
+              "3.49"
+            ]
+          },
+          {
+            "cells": [
+              "3D-LUT",
+              "25.29",
+              "0.923",
+              "0.063",
+              "593.5K",
+              "1.17"
+            ]
+          },
+          {
+            "cells": [
+              "DSN",
+              "23.75",
+              "0.875",
+              "0.061",
+              "4.42M",
+              "94.33"
+            ]
+          },
+          {
+            "cells": [
+              "AdaInt",
+              "25.49",
+              "0.926",
+              "0.052",
+              "619.7K",
+              "1.29"
+            ]
+          },
+          {
+            "cells": [
+              "Sep-LUT",
+              "25.47",
+              "0.921",
+              "—",
+              "119.8K",
+              "1.10"
+            ]
+          },
+          {
+            "cells": [
+              "FECNet",
+              "24.39",
+              "0.881",
+              "0.085",
+              "153.6K",
+              "14.80"
+            ]
+          },
+          {
+            "cells": [
+              "RCT++",
+              "25.60",
+              "0.932",
+              "0.049",
+              "131.4K",
+              "2.82"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "논문 Table 2 · Adobe5K, Expert C 정답 기준. 실행 시간은 논문의 NVIDIA A6000 실험 환경에서 보고한 값이며, —는 미보고 지표입니다."
+      },
+      "figures": [
+        {
+          "src": "/images/research/enhancement-adobe5k.webp",
+          "caption": "논문 Fig. 3 일부. Input / AdaInt / RCT++ / GT. 인물의 피부와 머리카락 색조를 비교할 수 있습니다."
+        }
+      ]
+    },
+    {
+      "id": "lowlight-evaluation",
+      "title": "저조도: 색상 개선과 잔여 노이즈를 구분해 분석",
+      "group": "evaluation",
+      "body": [
+        "저조도 영상에서는 색조를 개선했지만 잔여 노이즈가 나타났습니다. Bilateral filter 후처리를 적용하면 PSNR 22.36→22.47 dB, SSIM 0.781→0.825, LPIPS 0.217→0.156으로 개선됐습니다."
+      ],
+      "table": {
+        "title": "LoL 정량 비교와 후처리 효과",
+        "columns": [
+          "Method",
+          "PSNR↑ (dB)",
+          "SSIM↑",
+          "LPIPS↓",
+          "Parameters"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "RetinexNet",
+              "16.77",
+              "0.562",
+              "0.465",
+              "440K"
+            ]
+          },
+          {
+            "cells": [
+              "KinD",
+              "20.38",
+              "0.831",
+              "0.159",
+              "9.91M"
+            ]
+          },
+          {
+            "cells": [
+              "KinD++",
+              "21.80",
+              "0.836",
+              "0.158",
+              "8.27M"
+            ]
+          },
+          {
+            "cells": [
+              "DRBN",
+              "19.86",
+              "0.834",
+              "0.155",
+              "1.12M"
+            ]
+          },
+          {
+            "cells": [
+              "Zero-DCE",
+              "14.86",
+              "0.562",
+              "0.335",
+              "79.42K"
+            ]
+          },
+          {
+            "cells": [
+              "RUAS",
+              "18.23",
+              "0.717",
+              "0.354",
+              "3.44K"
+            ]
+          },
+          {
+            "cells": [
+              "URetinexNet",
+              "21.33",
+              "0.833",
+              "0.120",
+              "340.9K"
+            ]
+          },
+          {
+            "cells": [
+              "RCT++",
+              "22.36",
+              "0.781",
+              "0.217",
+              "131.4K"
+            ],
+            "highlight": true
+          },
+          {
+            "cells": [
+              "RCT++ + bilateral filter",
+              "22.47",
+              "0.825",
+              "0.156",
+              "131.4K"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "논문 Table 3 · LoL 400×600 영상 · +BF는 학습 모델 변경이 아닌 bilateral filtering 후처리입니다. 강조 행은 연구 결과를 구분하며, 각 열의 최고값 표시가 아닙니다."
+      },
+      "figures": [
+        {
+          "src": "/images/research/enhancement-lowlight.webp",
+          "caption": "논문 Fig. 4. Input / KinD++ / RCT++ / RCT++ + BF / GT. 확대 영역에서 색조와 잔여 노이즈, 후처리 효과를 함께 비교합니다."
+        }
+      ]
+    },
+    {
+      "id": "underwater-evaluation",
+      "title": "수중 영상: 편향된 색조 보정",
+      "group": "evaluation",
+      "body": [
+        "UIEB에서 수중 영상의 편향된 색조를 보정했습니다. 131.4K 파라미터로 PSNR 23.24 dB, SSIM 0.893, LPIPS 0.148을 기록해 PUIE-Net 대비 세 품질 지표를 개선했습니다."
+      ],
+      "table": {
+        "title": "UIEB 정량 비교",
+        "columns": [
+          "Method",
+          "PSNR↑ (dB)",
+          "SSIM↑",
+          "LPIPS↓",
+          "Parameters"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "WaterNet",
+              "19.81",
+              "0.861",
+              "—",
+              "24.81M"
+            ]
+          },
+          {
+            "cells": [
+              "FUnIE",
+              "17.09",
+              "0.728",
+              "0.353",
+              "7M"
+            ]
+          },
+          {
+            "cells": [
+              "Ucolor",
+              "20.78",
+              "0.871",
+              "—",
+              "157.4M"
+            ]
+          },
+          {
+            "cells": [
+              "PUIE-Net",
+              "22.07",
+              "0.884",
+              "0.166",
+              "1.4M"
+            ]
+          },
+          {
+            "cells": [
+              "RCT++",
+              "23.24",
+              "0.893",
+              "0.148",
+              "131.4K"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "논문 Table 4 · UIEB 정답 영상이 있는 쌍을 사용한 평가 · —는 미보고 지표입니다."
+      },
+      "figures": [
+        {
+          "src": "/images/research/enhancement-underwater.webp",
+          "caption": "논문 Fig. 5. Input / PUIE-Net / RCT++ / GT. 수중 촬영에서 발생한 색조 편향과 산호·상어의 색상 복원 결과."
+        }
+      ]
+    },
+    {
+      "id": "loss-ablation",
+      "title": "손실별 효과를 단계적으로 분리해 검증",
+      "group": "evaluation",
+      "body": [
+        "재구성 손실을 추가하면 Adobe5K PSNR이 25.47→25.54 dB, 엔트로피 손실까지 추가하면 25.60 dB로 높아졌습니다. 출력 비교에서도 피부의 과도한 붉은 색조가 완화되는 것을 확인했습니다."
+      ],
+      "table": {
+        "title": "Adobe5K 손실 구성 요소 비교",
+        "columns": [
+          "Color",
+          "Grid frequency",
+          "Reconstruction",
+          "Entropy",
+          "PSNR↑ (dB)",
+          "SSIM↑",
+          "LPIPS↓"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "✓",
+              "—",
+              "—",
+              "—",
+              "25.46",
+              "0.929",
+              "0.050"
+            ]
+          },
+          {
+            "cells": [
+              "✓",
+              "✓",
+              "—",
+              "—",
+              "25.47",
+              "0.932",
+              "0.050"
+            ]
+          },
+          {
+            "cells": [
+              "✓",
+              "✓",
+              "✓",
+              "—",
+              "25.54",
+              "0.931",
+              "0.049"
+            ]
+          },
+          {
+            "cells": [
+              "✓",
+              "✓",
+              "✓",
+              "✓",
+              "25.60",
+              "0.932",
+              "0.049"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "논문 Table 5 · Adobe5K · 같은 실험 설정에서 손실 조합을 변경했습니다. LPIPS는 논문 표의 반올림 값을 그대로 표기했습니다."
+      },
+      "figures": [
+        {
+          "src": "/images/research/enhancement-loss-ablation.webp",
+          "caption": "논문 Fig. 6. Input / 색상 손실 / +주파수 손실 / +재구성 손실 / +엔트로피 손실(RCT++) / GT. 좌하단 오차 맵은 밝을수록 오차가 큽니다. 엔트로피 손실을 더한 결과에서 피부 색조의 균형을 확인할 수 있습니다."
+        }
+      ]
+    }
+  ],
+  "outcome": "Yeji Jeon, Hanul Kim. Efficient Image Enhancement via Representative Color Transform. IEEE Access, Vol. 12, pp. 76458–76468, 2024. 대표 색상 변환의 재구성·다양성 제약과 경량 네트워크를 결합해 세 촬영 환경에서 모델 크기와 개선 품질을 검증한 제1저자 연구입니다.",
+  "sourceNote": "정량 표·모델 구조·정성 결과: IEEE Access 게재 논문(2024), Tables 2–6 및 Figs. 1–6. 엔트로피 학습 곡선은 별도 포트폴리오 실험 시각화입니다.",
+  "links": [
+    {
+      "label": "논문 · IEEE Access",
+      "url": "https://ieeexplore.ieee.org/document/10540437"
+    }
+  ],
+  "figures": [],
+  "stack": [
+    "PyTorch",
+    "Image Enhancement",
+    "Representative Color Transform",
+    "Depth-wise Separable Convolution",
+    "Entropy Loss",
+    "AdamW"
+  ],
+  "emphasis": {
+    "strong": [
+      "Depth-wise Separable Convolution으로 모델을 경량화",
+      "특정 색상에 집중하는 현상을 완화",
+      "대표 색상 변환 기반 영상 개선 모델의 경량화",
+      "재구성·엔트로피 손실"
+    ],
+    "accent": [
+      "619.7K에서 131.4K",
+      "파라미터를 78.8% 줄이면서",
+      "25.49에서 25.60 dB"
+    ]
+  }
+}

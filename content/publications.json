@@ -1,0 +1,56 @@
+[
+  {
+    "year": "2025",
+    "status": "Published",
+    "title": "Guided Texture Transfer Network for Mid-Infrared Satellite Image Super Resolution",
+    "venue": "IEEE Access · Vol. 13, pp. 138037–138051",
+    "role": "제1저자",
+    "tag": "Super Resolution",
+    "url": "https://doi.org/10.1109/ACCESS.2025.3595829"
+  },
+  {
+    "year": "2024",
+    "status": "Published",
+    "title": "Efficient Image Enhancement via Representative Color Transform",
+    "venue": "IEEE Access · Vol. 12, pp. 76458–76468",
+    "role": "제1저자",
+    "tag": "Image Enhancement",
+    "url": "https://ieeexplore.ieee.org/document/10540437"
+  },
+  {
+    "year": "2024",
+    "status": "Published",
+    "title": "Image Enhancement with Intensity Transformation on Embedding Space",
+    "venue": "CAAI Transactions on Intelligence Technology · Vol. 9, No. 1",
+    "role": "제2저자",
+    "tag": "Image Enhancement",
+    "url": null
+  },
+  {
+    "year": "—",
+    "status": "Submitted",
+    "title": "Open Vocabulary Segmentation with Context-Aware Text Embedding",
+    "venue": "Neurocomputing",
+    "role": "공동 제1저자",
+    "tag": "Segmentation",
+    "url": null
+  },
+  {
+    "year": "—",
+    "status": "Submitted",
+    "title": "Efficient Fake Detection with Non-Overlapping LoG Patch Embedding",
+    "venue": "IEEE Transactions on Circuits and Systems for Video Technology",
+    "role": "공동 제1저자",
+    "tag": "Deepfake Detection",
+    "url": null
+  },
+  {
+    "year": "—",
+    "status": "Submitted",
+    "title": "S3E: Salience–Semantic Distance–Size Energy for Efficient Multi-Vector Visual Document Retrieval",
+    "venue": "IEEE Transactions on Neural Networks and Learning Systems",
+    "role": "제3저자",
+    "tag": "Document Retrieval",
+    "url": null
+  }
+]

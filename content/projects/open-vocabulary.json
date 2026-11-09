@@ -1,0 +1,456 @@
+{
+  "id": "open-vocabulary",
+  "no": "03",
+  "title": "맥락을 반영하는 오픈 보캐뷸러리 분할",
+  "english": "Open Vocabulary Segmentation with Context-Aware Text Embedding",
+  "org": "CVLab, Seoultech",
+  "period": "2024.01 — 2025.02",
+  "description": "작게 찍힌 객체와 화면을 가득 채운 객체에는 서로 다른 텍스트 표현이 필요하다고 보았습니다. 크기별 프롬프트와 이미지에 따라 그 비중을 조절하는 adapter를 설계해 분할 성능을 높였습니다.",
+  "tags": [
+    "Segmentation",
+    "Computer Vision"
+  ],
+  "metric": "+5.0",
+  "metricLabel": "PC459 mIoU · MAFT+ 대비",
+  "kind": "RESEARCH · CO-FIRST AUTHOR",
+  "image": "segmentation",
+  "caption": "CATE · 이미지 맥락에 따라 달라지는 텍스트 임베딩",
+  "role": "공동 제1저자 · 맥락 프롬프트 및 텍스트 adapter 연구",
+  "problem": "같은 클래스라도 이미지에서 차지하는 크기와 촬영 시점에 따라 보이는 특징이 달라집니다. 멀리 있는 작은 객체는 윤곽과 주변 맥락이, 가까이 있는 큰 객체는 세부 형태와 질감이 더 두드러집니다. 클래스 이름에 고정된 텍스트 표현만 사용하면 이런 차이를 반영하기 어렵습니다. 여러 프롬프트를 단순 평균해도 현재 이미지에 맞지 않는 표현까지 같은 비중으로 섞이게 됩니다.",
+  "approach": [
+    "neutral·small·large 세 프롬프트로 클래스별 크기 맥락을 표현했습니다.",
+    "이미지와 텍스트의 cost map 및 시각 특징을 활용해 맥락별 가중치를 구하고 텍스트 임베딩을 가중합했습니다.",
+    "COCO-Stuff로 학습하고 다섯 벤치마크에서 평가해 새로운 클래스에 대한 일반화 성능을 확인했습니다."
+  ],
+  "results": [
+    {
+      "value": "19.2",
+      "label": "PC459 mIoU · ConvNeXt-B",
+      "note": "동일 ConvNeXt-B의 MAFT+ 14.2 대비 +5.0 포인트 · Table 2"
+    },
+    {
+      "value": "16.3",
+      "label": "A847 mIoU · ConvNeXt-L",
+      "note": "Table 2 대형 VLM 비교군에서 최고값"
+    },
+    {
+      "value": "37.9",
+      "label": "A150 mIoU · ConvNeXt-L",
+      "note": "Table 2의 CAT-Seg ViT-L/14와 동일한 최고값"
+    }
+  ],
+  "figures": [],
+  "stack": [
+    "PyTorch",
+    "CLIP / ConvNeXt",
+    "Context-Aware Text Embedding",
+    "Attention Pooling",
+    "Semantic Segmentation"
+  ],
+  "objective": "클래스마다 다양한 맥락의 텍스트 표현을 준비하고, 입력 이미지에 맞는 표현에 더 높은 비중을 주어 학습하지 않은 클래스의 영역까지 구분하는 것이 목표였습니다.",
+  "summary": "오픈 보캐뷸러리 분할은 자연어로 클래스를 지정해 학습하지 않은 대상의 영역까지 찾는 문제입니다. 크기 맥락을 담은 세 가지 프롬프트와 Context-aware Text Adapter를 결합해, 이미지에 따라 텍스트 임베딩을 조정하는 CATE를 연구했습니다. 동일 ConvNeXt-B 조건에서 PC459 mIoU를 MAFT+의 14.2에서 19.2로 높였고, 위치·시점 맥락으로의 확장도 검증했습니다.",
+  "contributions": [
+    "공동 제1저자로서 고정된 텍스트 표현의 한계를 분석하고, 영상 맥락을 활용하는 텍스트 임베딩 연구를 주도했습니다.",
+    "크기·위치·시점 정보를 담은 프롬프트를 구성하고, 시각 정보와의 연관성에 따라 텍스트 임베딩을 동적으로 가중합하는 adapter를 설계했습니다.",
+    "프롬프트와 adapter 구성 요소를 비교하고, 다섯 벤치마크의 정량 결과·분할 사례·가중치 시각화를 통해 동작을 분석했습니다."
+  ],
+  "outcome": "공동 제1저자 논문 “Open Vocabulary Segmentation with Context-Aware Text Embedding”으로 정리했습니다. 저자는 Yeji Jeon, Jeongyeon Kim, Yeong Jun Koh, Hanul Kim이며, 앞의 두 저자가 동등하게 기여했습니다. 논문은 Neurocomputing에 투고했습니다.",
+  "sourceNote": "정량 결과는 CATE 원고의 Table 2·3·6을 기준으로 표기했습니다. mIoU는 높을수록 좋으며, 비교 표에는 VLM 규모와 평가 조건을 함께 표시했습니다.",
+  "links": [],
+  "thumbnail": {
+    "src": "/images/research/ovs-thumbnail.webp",
+    "caption": "A150 · Input / CATE · Fig. 4 첫 번째 사례"
+  },
+  "sections": [
+    {
+      "id": "scale-prompts",
+      "title": "클래스 이름에 크기 맥락을 더하기",
+      "group": "method",
+      "body": [
+        "같은 dog라도 멀리 작게 찍힌 경우와 화면을 가득 채운 경우에 보이는 단서가 다릅니다. 기본 프롬프트 “A photo of a {class}”에 small·large 맥락을 더해, 클래스마다 neutral·small·large 세 가지 텍스트 표현을 만들었습니다.",
+        "프롬프트를 늘리기만 하면 이미지에 맞지 않는 표현도 함께 섞입니다. 맥락별 projection으로 각 표현을 변환하고, adapter가 이미지에 맞춰 조합하도록 구성했습니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/research/ovs-architecture.webp",
+          "caption": "Fig. 1 · 세 가지 크기 프롬프트와 이미지 특징이 cost aggregator·텍스트 adapter·계층적 mask decoder에서 결합되는 CATE 구조."
+        }
+      ]
+    },
+    {
+      "id": "context-adapter",
+      "title": "이미지를 보고 프롬프트의 비중을 조절하기",
+      "group": "method",
+      "body": [
+        "작은 개가 있는 장면에서는 small dog 표현이, 개가 화면을 크게 차지하는 장면에서는 large dog 표현이 더 유용할 수 있습니다. 하나의 이미지에도 크기가 다른 객체가 함께 나타나므로 프롬프트의 비중을 이미지와 클래스에 따라 조절하도록 설계했습니다.",
+        "Context-aware Text Adapter는 pixel–text 유사도로 계산한 cost map과 시각 특징을 결합하고, attention pooling으로 클래스·맥락별 시각 정보를 모읍니다. 이를 텍스트 임베딩과 비교해 구한 가중치로 neutral·small·large 표현을 조합합니다. 같은 클래스라도 입력 이미지에 따라 최종 텍스트 표현이 달라지는 구조입니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/research/ovs-adapter.webp",
+          "caption": "Fig. 2 · cost map과 시각 임베딩의 결합 → attention pooling → 텍스트와의 유사도 → softmax → 가중합 텍스트 임베딩."
+        }
+      ]
+    },
+    {
+      "id": "training",
+      "title": "맥락별 텍스트 표현을 분할 예측에 반영",
+      "group": "method",
+      "body": [
+        "계층적 mask decoder는 이미지와 텍스트의 대응을 나타내는 cost 특징에 맥락별 텍스트 임베딩을 cross-attention으로 결합합니다. 해상도를 높이는 각 단계에서 이미지 특징을 다시 연결해 객체의 세부 구조를 보완했습니다.",
+        "COCO-Stuff로 학습하고 ConvNeXt-B·L 기반 CLIP에서 평가했습니다. CLIP 텍스트 인코더는 attention의 query·value projection을 미세조정하고, 나머지 구성 요소는 전체 학습했습니다."
+      ]
+    },
+    {
+      "id": "benchmark",
+      "title": "다섯 벤치마크에서 일반화 성능 비교",
+      "group": "evaluation",
+      "body": [
+        "ADE20K·Pascal Context·Pascal VOC의 다섯 평가 설정에서 mIoU를 측정했습니다. A847·PC459·A150은 학습하지 않은 클래스의 비율이 각각 약 89%·85%·69%로, 새로운 클래스에 대한 일반화 성능을 확인할 수 있는 조건입니다.",
+        "ConvNeXt-B에서 PC459 mIoU는 MAFT+의 14.2에서 19.2로 5.0포인트 향상됐습니다. ConvNeXt-L에서는 A847 16.3, A150 37.9를 기록해 비교 표에서 각각 최고값과 공동 최고값을 얻었습니다."
+      ],
+      "table": {
+        "title": "주요 비교 방법의 분할 성능 · mIoU ↑",
+        "columns": [
+          "방법",
+          "VLM",
+          "A847",
+          "PC459",
+          "A150",
+          "PC59",
+          "PAS20"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "SED",
+              "ConvNeXt-B",
+              "11.4",
+              "18.6",
+              "31.6",
+              "57.3",
+              "94.4"
+            ]
+          },
+          {
+            "cells": [
+              "CAT-Seg",
+              "ViT-B/16",
+              "12.0",
+              "19.0",
+              "31.8",
+              "57.5",
+              "94.6"
+            ]
+          },
+          {
+            "cells": [
+              "MAFT+",
+              "ConvNeXt-B",
+              "13.2",
+              "14.2",
+              "33.6",
+              "55.9",
+              "93.9"
+            ]
+          },
+          {
+            "cells": [
+              "CATE",
+              "ConvNeXt-B",
+              "13.4",
+              "19.2",
+              "34.1",
+              "56.2",
+              "93.9"
+            ],
+            "highlight": true
+          },
+          {
+            "cells": [
+              "FC-CLIP",
+              "ConvNeXt-L",
+              "14.8",
+              "18.2",
+              "34.1",
+              "58.4",
+              "95.4"
+            ]
+          },
+          {
+            "cells": [
+              "SED",
+              "ConvNeXt-L",
+              "13.9",
+              "22.6",
+              "35.2",
+              "60.6",
+              "96.1"
+            ]
+          },
+          {
+            "cells": [
+              "CAT-Seg",
+              "ViT-L/14",
+              "16.0",
+              "23.8",
+              "37.9",
+              "63.3",
+              "97.0"
+            ]
+          },
+          {
+            "cells": [
+              "MAFT+",
+              "ConvNeXt-L",
+              "15.1",
+              "21.6",
+              "36.1",
+              "59.4",
+              "96.5"
+            ]
+          },
+          {
+            "cells": [
+              "CATE",
+              "ConvNeXt-L",
+              "16.3",
+              "23.2",
+              "37.9",
+              "60.5",
+              "96.0"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "Table 2의 주요 비교 방법 발췌. 위 네 행은 base 규모, 아래 다섯 행은 large 규모 VLM 비교군이며, 제시한 방법들은 추가 시각 backbone을 사용하지 않습니다. 원표의 VLM 이미지 인코더 파라미터 수: ConvNeXt-B 89M, ViT-B/16 87M, ConvNeXt-L 198M, ViT-L/14 307M. 서로 다른 VLM의 결과는 동일 backbone 비교와 구분합니다."
+      }
+    },
+    {
+      "id": "ablation",
+      "title": "크기 프롬프트와 이미지에 따른 조합의 효과",
+      "group": "evaluation",
+      "body": [
+        "단일 프롬프트, 학습 가능한 프롬프트, 크기 프롬프트의 평균, 최종 CATE를 비교했습니다. 최종 CATE는 ConvNeXt-B에서 단일 프롬프트 대비 A847 12.9→13.4, PC459 18.7→19.2, A150 33.4→34.1로 개선됐습니다.",
+        "ConvNeXt-L에서는 크기 프롬프트의 단순 평균보다 최종 CATE가 다섯 평가 설정 모두에서 높은 값을 기록했습니다. 다양한 맥락을 준비하는 것과 함께 이미지에 따라 표현을 조합하는 구성의 효과를 확인했습니다."
+      ],
+      "table": {
+        "title": "프롬프트와 adapter 구성 요소 비교 · mIoU ↑",
+        "columns": [
+          "VLM",
+          "구성",
+          "A847",
+          "PC459",
+          "A150",
+          "PC59",
+          "PAS20"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "ConvNeXt-B",
+              "Single prompt",
+              "12.9",
+              "18.7",
+              "33.4",
+              "55.6",
+              "91.0"
+            ]
+          },
+          {
+            "cells": [
+              "ConvNeXt-B",
+              "Learned prompts",
+              "12.1",
+              "18.7",
+              "32.9",
+              "56.8",
+              "92.9"
+            ]
+          },
+          {
+            "cells": [
+              "ConvNeXt-B",
+              "Scale · 평균",
+              "13.3",
+              "19.2",
+              "34.0",
+              "56.8",
+              "93.8"
+            ]
+          },
+          {
+            "cells": [
+              "ConvNeXt-B",
+              "Scale + CATA",
+              "13.4",
+              "19.2",
+              "34.1",
+              "56.2",
+              "93.9"
+            ],
+            "highlight": true
+          },
+          {
+            "cells": [
+              "ConvNeXt-L",
+              "Single prompt",
+              "15.7",
+              "23.0",
+              "37.4",
+              "60.0",
+              "95.5"
+            ]
+          },
+          {
+            "cells": [
+              "ConvNeXt-L",
+              "Learned prompts",
+              "14.8",
+              "22.8",
+              "37.3",
+              "60.2",
+              "95.8"
+            ]
+          },
+          {
+            "cells": [
+              "ConvNeXt-L",
+              "Scale · 평균",
+              "16.0",
+              "23.2",
+              "37.7",
+              "60.0",
+              "95.3"
+            ]
+          },
+          {
+            "cells": [
+              "ConvNeXt-L",
+              "Scale + CATA",
+              "16.3",
+              "23.2",
+              "37.9",
+              "60.5",
+              "96.0"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "Table 3. Scale · 평균은 context-wise projection과 CATA를 모두 거치지 않고 텍스트 임베딩을 평균한 조건입니다. 따라서 최종 설정과의 차이를 CATA 단독의 효과로 해석하지 않습니다. Learned prompts는 14개 학습 토큰으로 구성한 세 집합을 사용합니다."
+      }
+    },
+    {
+      "id": "alternative-contexts",
+      "title": "크기에서 위치·촬영 시점으로 확장",
+      "group": "evaluation",
+      "body": [
+        "동일한 구조에서 프롬프트를 위치(left·center·right)와 촬영 시점(top-down·panoramic·close-up)으로 바꾸어 적용했습니다. 이미지에 맞는 텍스트 표현을 조합하는 방식을 크기 외의 맥락으로도 확장했습니다.",
+        "위치·시점 프롬프트에서도 여러 평가 설정의 성능이 개선됐으며, PC459와 PC59는 시점 맥락에서 각각 19.5와 57.5를 기록했습니다."
+      ],
+      "table": {
+        "title": "맥락 종류에 따른 성능 · ConvNeXt-B · mIoU ↑",
+        "columns": [
+          "맥락",
+          "A847",
+          "PC459",
+          "A150",
+          "PC59",
+          "PAS20"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "Single",
+              "12.9",
+              "18.7",
+              "33.4",
+              "55.6",
+              "91.0"
+            ]
+          },
+          {
+            "cells": [
+              "Location",
+              "12.9",
+              "19.1",
+              "33.9",
+              "56.4",
+              "93.6"
+            ]
+          },
+          {
+            "cells": [
+              "Viewport",
+              "13.2",
+              "19.5",
+              "34.1",
+              "57.5",
+              "93.1"
+            ]
+          },
+          {
+            "cells": [
+              "Scale · 최종 설정",
+              "13.4",
+              "19.2",
+              "34.1",
+              "56.2",
+              "93.9"
+            ],
+            "highlight": true
+          }
+        ],
+        "note": "Table 6 · ConvNeXt-B. 각 맥락에 세 개의 프롬프트를 사용했으며 최종 CATE는 scale 설정입니다."
+      },
+      "figures": [
+        {
+          "src": "/images/research/ovs-scale-weights.webp",
+          "caption": "Fig. 7(a) · 작은 lamp·person에는 small, 큰 bed·water에는 large 프롬프트의 가중치가 높게 나타납니다. 아래 막대는 맥락별 가중치이며, 위 영상은 두 번째 decoder 특징의 heatmap입니다."
+        },
+        {
+          "src": "/images/research/ovs-location-weights.webp",
+          "caption": "Fig. 7(b) · 위치 맥락의 예시. 왼쪽의 plant는 left, 중앙의 person은 center 프롬프트에 높은 가중치를 보입니다."
+        },
+        {
+          "src": "/images/research/ovs-viewport-weights.webp",
+          "caption": "Fig. 7(c) · 시점 맥락의 예시. 항공 시점의 road는 top-down, 확대된 person은 close-up 프롬프트에 높은 가중치를 보입니다."
+        }
+      ]
+    },
+    {
+      "id": "qualitative",
+      "title": "혼동하기 쉬운 클래스와 작은 객체의 분할",
+      "group": "evaluation",
+      "body": [
+        "A150 예시에서는 building과 tower, tree와 palm처럼 외형이 유사한 클래스의 구분을 살폈습니다. 제안 방법은 해당 장면에서 building과 palm을 더 일관되게 구분하며, 작은 rock과 복잡한 실내의 sofa·floor 영역에서도 예측 차이를 보여줍니다.",
+        "PC459에서는 water와 foam·mountain의 혼동, 어두운 장면의 pole, 비슷한 색의 horse와 배경, airplane과 helicopter의 혼동을 비교했습니다. 정량 평균만으로 알기 어려운 영역별 차이를 입력·기존 방법·CATE·정답 마스크와 함께 제시했습니다."
+      ],
+      "figures": [
+        {
+          "src": "/images/research/ovs-qualitative-a150.webp",
+          "caption": "Fig. 4 · A150. 왼쪽부터 Input / CAT-Seg / SED / CATE / Ground Truth. CATE·SED는 ConvNeXt-B, CAT-Seg는 ViT-B CLIP을 사용합니다."
+        },
+        {
+          "src": "/images/research/ovs-qualitative-pc459.webp",
+          "caption": "Fig. 5 · PC459. 왼쪽부터 Input / CAT-Seg / SED / CATE / Ground Truth. CATE·SED는 ConvNeXt-B, CAT-Seg는 ViT-B CLIP을 사용합니다."
+        }
+      ]
+    }
+  ],
+  "emphasis": {
+    "strong": [
+      "크기 맥락을 담은 세 가지 프롬프트와 Context-aware Text Adapter",
+      "텍스트 임베딩을 동적으로 가중합하는 adapter를 설계",
+      "현재 이미지에 맞지 않는 표현까지 같은 비중",
+      "프롬프트의 비중을 이미지와 클래스에 따라 조절",
+      "입력 이미지에 따라 최종 텍스트 표현이 달라지는 구조",
+      "다섯 평가 설정 모두에서 높은 값"
+    ],
+    "accent": [
+      "14.2에서 19.2로",
+      "5.0포인트 향상",
+      "A847 16.3, A150 37.9"
+    ]
+  }
+}
